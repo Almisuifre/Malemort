@@ -2,24 +2,24 @@
 #define NB_ZA 7  //Nombre de zone d'arrets
 
 //Temporisaion d'arrêt des feux (Carré d'arrêt)
-#define tempoFeuOff_ZA0 5000 //ZA0
-#define tempoFeuOff_ZA1 4000 //ZA1
-#define tempoFeuOff_ZA2 7000 //ZA2
-#define tempoFeuOff_ZA3 7000 //ZA3
-#define tempoFeuOff_ZA4 5000 //ZA4
-#define tempoFeuOff_ZA5 2000 //ZA5
-#define tempoFeuOff_ZA6 2000 //ZA6
+#define tempoFeuOff_ZA0 4000 //ZA0
+#define tempoFeuOff_ZA1 3000 //ZA1
+#define tempoFeuOff_ZA2 4000 //ZA2
+#define tempoFeuOff_ZA3 4000 //ZA3
+#define tempoFeuOff_ZA4 4000 //ZA4
+#define tempoFeuOff_ZA5 3000 //ZA5
+#define tempoFeuOff_ZA6 3000 //ZA6
 
 //Temporisation de mise en départ du train
-#define tempoArretGare_ZA0 1000 //ZA0
-#define tempoArretGare_ZA1 1500 //ZA1
-#define tempoArretGare_ZA2 1000 //ZA2
-#define tempoArretGare_ZA3 1000 //ZA3
-#define tempoArretGare_ZA2ZA3 1000 //ZA2 et ZA3
-#define tempoArretGare_ZA4 1500 //ZA4
-#define tempoArretGare_ZA5 1500 //ZA5
-#define tempoArretGare_ZA6 1500 //ZA6
-#define tempoArretGare_ZA5ZA6 1500 //ZA5 et ZA6
+#define tempoArretGare_ZA0 5000 //ZA0
+#define tempoArretGare_ZA1 5000 //ZA1
+#define tempoArretGare_ZA2 500 //ZA2
+#define tempoArretGare_ZA3 500 //ZA3
+#define tempoArretGare_ZA2ZA3 500 //ZA2 et ZA3
+#define tempoArretGare_ZA4 8000 //ZA4
+#define tempoArretGare_ZA5 8000 //ZA5
+#define tempoArretGare_ZA6 8000 //ZA6
+#define tempoArretGare_ZA5ZA6 8000 //ZA5 et ZA6
 
 //Zone d'arret 0
 #define ZA0R 22 //<- Lecture (Read)
@@ -53,9 +53,10 @@
 #define AIG_Vers_za2 48
 #define AIG_Vers_za3 49
 
-//CarteAiguillageMalemort
+//CarteAiguillageBrive
 #define AIG_Vers_za5 50
 #define AIG_Vers_za6 51
+#define CMD_AIG_Brive 46
 
 //Carte Sens et marche
 #define Direction 52  //-> Sens
@@ -95,6 +96,9 @@ boolean tZoneArret[NB_ZA];  //Tableau des état des zones d'arrets
 
 uint8_t seqCurrent = 111;           //Séquence courrente
 boolean currentSeqChanged = false;  //Flag séquence changé
+boolean currentAigBriveChanged = false;  //Placer le flag à l'état non changé
+boolean commandeAigBrive = false;   //Etat de la commande de l'aiguille Brive
+boolean aigBriveCurrent = false;  //Etat de l'aiguille
 
 int etatAiguilleTulle = 0;  //Etat de l'aiguille Tulle Inconnu
 boolean etatAiguilleTulleChanged = false; //Flag aiguille tulle
