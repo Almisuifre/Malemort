@@ -2,7 +2,7 @@
 #define NB_ZA 7  //Nombre de zone d'arrets
 
 //Temporisaion d'arrêt des feux (Carré d'arrêt)
-#define tempoFeuOff_ZA0 4000 //ZA0
+#define tempoFeuOff_ZA0 5000 //ZA0
 #define tempoFeuOff_ZA1 3000 //ZA1
 #define tempoFeuOff_ZA2 4000 //ZA2
 #define tempoFeuOff_ZA3 4000 //ZA3

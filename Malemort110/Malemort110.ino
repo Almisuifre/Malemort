@@ -172,7 +172,9 @@ void checkAigBrive(boolean AigBrive) {
 void cmdZA0_to_ZA1() {
   lcdPrint("MALEMORT","Sens Tulle","Start","");
   cmd_sensMarche(Tulle, Marche);  //Lancer le sens de marche vers Tulle
-  delay(tempoArretGare_ZA0);
+  //delay(tempoArretGare_ZA0);
+  tempoArret(tempoArretGare_ZA0);
+  
   lcdPrint("MALEMORT","ZA0 -> ZA1","","");
   cmd_ZA_auto(ZA0, tempoFeuOff_ZA0);  //Lancer le départ du train
 }
@@ -181,7 +183,8 @@ void cmdZA0_to_ZA1() {
 void cmdZA5_to_ZA0() {
   lcdPrint("MALEMORT","Sens","Stop","");
   cmd_sensMarche(SensStop, Arret);  //Stop le sens de marche
-  delay(tempoArretGare_ZA5);
+  //delay(tempoArretGare_ZA5);
+  tempoArret(tempoArretGare_ZA5);
   lcdPrint("MALEMORT","ZA5 -> ZA0","","");
   cmd_ZA_auto(ZA5, tempoFeuOff_ZA5);  //Lancer le départ du train
 }
@@ -190,7 +193,8 @@ void cmdZA5_to_ZA0() {
 void cmdZA6_to_ZA0() {
   lcdPrint("MALEMORT","Sens","Stop","");
   cmd_sensMarche(SensStop, Arret);  //Stop le sens de marche
-  delay(tempoArretGare_ZA6);
+  //delay(tempoArretGare_ZA6);
+  tempoArret(tempoArretGare_ZA6);
   lcdPrint("MALEMORT","ZA6 -> ZA0","","");
   cmd_ZA_auto(ZA6, tempoFeuOff_ZA6);  //Lancer le départ du train
 }
@@ -199,7 +203,8 @@ void cmdZA6_to_ZA0() {
 void cmdZA4_to_ZA5ZA6() {
   lcdPrint("MALEMORT","Sens Brive","Start","");
   cmd_sensMarche(Brive, Marche);  //Lancer le sens de marche vers Brive
-  delay(tempoArretGare_ZA4);
+  //delay(tempoArretGare_ZA4);
+  tempoArret(tempoArretGare_ZA4);
   lcdPrint("MALEMORT","ZA4 -> ZA5 ZA6","","");
   cmd_ZA_auto(ZA4, tempoFeuOff_ZA4);  //Lancer le départ du train
 }
@@ -210,13 +215,15 @@ void cmdZA2ZA3_to_ZA4() {
   cmd_sensMarche(SensStop, Arret);  //Stop le sens de marche
   
   if(etatAiguilleTulle == 2) {
-    delay(tempoArretGare_ZA3);
+    //delay(tempoArretGare_ZA3);
+    tempoArret(tempoArretGare_ZA3);
     lcdPrint("MALEMORT","ZA3 -> ZA4","","");
     cmd_ZA_auto(ZA3, tempoFeuOff_ZA3);  //Lancer le départ du train
     
   }
   else if (etatAiguilleTulle == 3) {
-    delay(tempoArretGare_ZA2);
+    //delay(tempoArretGare_ZA2);
+    tempoArret(tempoArretGare_ZA2);
     lcdPrint("MALEMORT","ZA2 -> ZA4","","");
     cmd_ZA_auto(ZA2, tempoFeuOff_ZA2);  //Lancer le départ du train
     
@@ -241,10 +248,19 @@ void cmdZA1_to_ZA2ZA3() {
     flagTunnel = false;
   }
 
-  delay(tempoArretGare_ZA1);
+  //delay(tempoArretGare_ZA1);
+  tempoArret(tempoArretGare_ZA1);
   if(flagTunnel) {
     lcdPrint("MALEMORT","ZA1 -> ZA2 ZA3","","");
     cmd_ZA_auto(ZA1, tempoFeuOff_ZA1);  //Lancer le départ du train
+  }
+}
+
+//Gestion des temporisations longue 
+void tempoArret(int temporisation) {
+  int i;
+  for(i = 0; i < temporisation; i++) {
+    delay(1);
   }
 }
 
@@ -258,37 +274,44 @@ void cmd_sensMarche(int sens, int marche) {
 void cmd_ZA_auto(int ZA, int tempo) {
   if(ZA == 0) {
     digitalWrite(ZA0W, HIGH);
-    delay(tempo);
+    //delay(tempo);
+    tempoArret(tempo);
     digitalWrite(ZA0W, LOW);
   }
   else if(ZA == 1) {
     digitalWrite(ZA1W, HIGH);
-    delay(tempo);
+    //delay(tempo);
+    tempoArret(tempo);
     digitalWrite(ZA1W, LOW);
   }
   else if(ZA == 2) {
     digitalWrite(ZA2W, HIGH);
-    delay(tempo);
+    //delay(tempo);
+    tempoArret(tempo);
     digitalWrite(ZA2W, LOW);
   }
   else if(ZA == 3) {
     digitalWrite(ZA3W, HIGH);
-    delay(tempo);
+    //delay(tempo);
+    tempoArret(tempo);
     digitalWrite(ZA3W, LOW);
   }
   else if(ZA == 4) {
     digitalWrite(ZA4W, HIGH);
-    delay(tempo);
+    //delay(tempo);
+    tempoArret(tempo);
     digitalWrite(ZA4W, LOW);
   }
   else if(ZA == 5) {
     digitalWrite(ZA5W, HIGH);
-    delay(tempo);
+    //delay(tempo);
+    tempoArret(tempo);
     digitalWrite(ZA5W, LOW);
   }
   else if(ZA == 6) {
     digitalWrite(ZA6W, HIGH);
-    delay(tempo);
+    //delay(tempo);
+    tempoArret(tempo);
     digitalWrite(ZA6W, LOW);
   }
 }
@@ -298,26 +321,30 @@ void cmd_aiguille(int versZA) {
   
   if(versZA == 2) {
     digitalWrite(AIG_Vers_za2, HIGH);
-    delay(100);
+    //delay(100);
+    tempoArret(100);
     digitalWrite(AIG_Vers_za2, LOW);
     etatAiguilleTulle = 2;
     etatAiguilleTulleChanged = true;
   }
   else if(versZA == 3) {
     digitalWrite(AIG_Vers_za3, HIGH);
-    delay(100);
+    //delay(100);
+    tempoArret(100);
     digitalWrite(AIG_Vers_za3, LOW);
     etatAiguilleTulle = 3;
     etatAiguilleTulleChanged = true;
   }
   if(versZA == 5) {
     digitalWrite(AIG_Vers_za5, HIGH);
-    delay(100);
+    //delay(100);
+    tempoArret(100);
     digitalWrite(AIG_Vers_za5, LOW);
   }
   if(versZA == 6) {
     digitalWrite(AIG_Vers_za6, HIGH);
-    delay(100);
+    //delay(100);
+    tempoArret(100);
     digitalWrite(AIG_Vers_za6, LOW);
   }
 }
@@ -366,7 +393,7 @@ String returnZa(int ZA) {
   
   return Valeur;
 }
-
+/*
 // Fonction de commande des cartes
 void testWriteCard() {
   for (int i = 0; i <= 9; i++) {
@@ -408,40 +435,51 @@ void testWriteCard() {
 
     case 7:
       digitalWrite(Direction, HIGH);
-      delay(100);
+      //delay(100);
+      tempoArret(100);
       digitalWrite(Direction, LOW);
-      delay(100);
+      //delay(100);
+      tempoArret(100);
       digitalWrite(Direction, HIGH);
       digitalWrite(Autorisation, HIGH);
-      delay(100);
+      //delay(100);
+      tempoArret(100);
       digitalWrite(Direction, LOW);
       digitalWrite(Autorisation, LOW);
       break;
 
     case 8:
       digitalWrite(AIG_Vers_za2, HIGH);
-      delay(20);
+      //delay(20);
+      tempoArret(20);
       digitalWrite(AIG_Vers_za2, LOW);
-      delay(100);
+      //delay(100);
+      tempoArret(20);
       digitalWrite(AIG_Vers_za3, HIGH);
-      delay(20);
+      //delay(20);
+      tempoArret(20);
       digitalWrite(AIG_Vers_za3, LOW);
       break;
 
     case 9:
       digitalWrite(AIG_Vers_za5, HIGH);
-      delay(20);
+      //delay(20);
+      tempoArret(20);
       digitalWrite(AIG_Vers_za5, LOW);
-      delay(100);
+      //delay(100);
+      tempoArret(100);
       digitalWrite(AIG_Vers_za6, HIGH);
-      delay(20);
+      //delay(20);
+      tempoArret(20);
       digitalWrite(AIG_Vers_za6, LOW);
       break;
     }
     
-    delay(500);
+    //delay(500);
+    tempoArret(500);
   }
 }
+*/
 
 void lcdPrint(String txtL0, String txtL1, String txtL2, String txtL3) {
   lcd.clear();
