@@ -1,261 +1,417 @@
 /*
- * Réseau MALEMORT
- * GESTION DES PN
- * 
- */
+   Reseau MALEMORT
+   GESTION DES PN
+
+*/
 
 /* ** CONFIGURATIONS ** */
-/*
- * D2 (INPUT) détection 1
- * D3 (INPUT) détection 2
- * D4 (INPUT) détection 3
- * 
- * A0 (INPUT) CONFIG
- * A1 (INPUT) Transport
- * 
- * D7 (OUTPUT) Feu PN 1
- * D8 (OUTPUT) Feu PN 2
- * 
- * D11 (OUTPUT) SENS PN 1
- * D12 (OUTPUT) SENS PN 2
- */
+#define detect_1   2    //D2 (INPUT) detection 1
+#define detect_2   3    //D3 (INPUT) detection 2
+#define detect_3   4    //D4 (INPUT) detection 3
+#define btnConfig  A0   //A0 (INPUT) CONFIG
+#define btnMove    A1   //A1 (INPUT) Transport
+#define feuPN_1    9    //D9 (OUTPUT) Feu PN 1
+#define feuPN_2    10   //D10 (OUTPUT) Feu PN 2
+#define sensPN_1   11   //D11 (OUTPUT) SENS PN 1
+#define sensPN_2   12   //D12 (OUTPUT) SENS PN 2
 
- #define detect_1 2 //PD2
- #define detect_2 3 //PD3
- #define detect_3 4// PD4
- #define btnConfig A0 //PC0
- #define btnMove A1 //PC1
- #define feuPN_1 7 //PD7
- #define feuPN_2 8 //PB0
- #define sensPN_1 11 //PB3
- #define sensPN_2 12 //PB4
+/* ** VARIABLES ** */
+int btnConf = 0;
+int btnMoveTo = 0;
+boolean detection_1 = false;
+boolean detection_2 = false;
+boolean detection_3 = false;
+
+boolean waitEndSeq = false;
+
+unsigned long passages_A = 0;
+unsigned long passages_B = 0;
+
+boolean initPN = false;
+int currentSeq = 0;
+
+long previousMillis_A = 0;
+unsigned long currentMillis_A =0;
+boolean led_PN1_state = false;
+boolean start_Led_PN1 = false;
+
+long previousMillis_B = 0;
+unsigned long currentMillis_B =0;
+boolean led_PN2_state = false;
+boolean start_Led_PN2 = false;
 
 
- int btnConf = 0;
- int btnMoveTo = 0;
- boolean detection_1 = false;
- boolean detection_2 = false;
- boolean detection_3 = false;
-
- long previousMillis = 0;
-
- boolean init_barriere = false;
- boolean sens_brive_to_tulle = false;
- boolean sens_tulle_to_brive = false;
- boolean wait_detect = false;
-
- boolean start_led_PN1 = false;
- boolean start_led_PN2 = false;
-
- boolean led_PN1_state = false;
- boolean led_PN2_state = false;
- 
 void setup() {
   //INPUT
-  pinMode(detect_1, INPUT); //D2 (INPUT) détection 1
-  pinMode(detect_2, INPUT); //D3 (INPUT) détection 2
-  pinMode(detect_3, INPUT); //D4 (INPUT) détection 3
-
-  pinMode(btnConfig, INPUT); //A0 (INPUT) CONFIG
-  pinMode(btnMove, INPUT); //A1 (INPUT) Transport
+  pinMode(detect_1, INPUT);   //Detection 1
+  pinMode(detect_2, INPUT);   //Detection 2
+  pinMode(detect_3, INPUT);   //Detection 3
+  pinMode(btnConfig, INPUT);  //Configuration
+  pinMode(btnMove, INPUT);    //Mode transport
 
   //OUTPUT
-  pinMode(feuPN_1, OUTPUT); //D7 (OUTPUT) Feu PN 1
-  pinMode(feuPN_2, OUTPUT); //D8 (OUTPUT) Feu PN 2
+  pinMode(feuPN_1, OUTPUT);   //Feu PN 1
+  pinMode(feuPN_2, OUTPUT);   //Feu PN 2
+  pinMode(sensPN_1, OUTPUT);  //Sens PN 1
+  pinMode(sensPN_2, OUTPUT);  //Sens PN 2
 
-  pinMode(sensPN_1, OUTPUT); //D11 (OUTPUT) SENS PN 1
-  pinMode(sensPN_2, OUTPUT); //D12 (OUTPUT) SENS PN 2
-
+  //SERIAL
   Serial.begin(9600);
-  Serial.println("Malemort start");
-  Serial.println("--------------");
-  Serial.println("");
 }
 
 void loop() {
-  //Scruter les états
-  btnConf = analogRead(btnConfig);  //Bouton configuration
-  btnMoveTo = analogRead(btnMove);  //Bouton transport (baisser les barrières)
-  detection_1 = digitalRead(detect_1);  //Détection 1
-  detection_2 = digitalRead(detect_2);  //Détection 2
-  detection_3 = digitalRead(detect_3);  //Détection 3
-
+  capture();
+  
+  //Bouton transport
   if((btnMoveTo > 500) && (btnMoveTo < 520)) {
-    //On est en mode normal, l'automatisme fonctionne
-    //Les barrières sont levés
-    Serial.println("Mode Normal : L'automatisme est activé");
-    if(!init_barriere) {
-      //Lancer initialisation
-      PN_1_UP();
-      PN_2_UP();
-      init_barriere = true;
-    }
-
-    if((btnConf > 500) && (btnConf < 520)) {
-      //Mode court (Detection 1 + Détection 2)
-      Serial.println("Mode court");
-      
-      if(detection_1 && !wait_detect) {
-        //Si le train est détecté sur Detect_1
-        delay(100);
-        PN_1_DO();
-        delay(500);
-        PN_2_DO();
-        sens_brive_to_tulle = true;
-      }
-
-      if(detection_2 && sens_brive_to_tulle) {
-        //Si le train est détecté sur Detect_2
-        delay(100);
-        PN_1_UP();
-        delay(500);
-        PN_2_UP();
-        sens_brive_to_tulle = false;
-        wait_detect = true;
-      }
-
-       if(detection_2 && !wait_detect) {
-        //Si le train est détecté sur Detect_2
-        delay(100);
-        PN_2_DO();
-        delay(500);
-        PN_1_DO();
-        sens_tulle_to_brive = true;
-      }
-
-      if(detection_1 && sens_tulle_to_brive) {
-        //Si le train est détecté sur Detect_1
-        delay(100);
-        PN_2_UP();
-        delay(500);
-        PN_1_UP();
-        sens_tulle_to_brive = false;
-        wait_detect = true;
-      }
-    }
-    if((btnConf > 700) && (btnConf < 710)) {
-      //Mode long (Détection 1 + Détection 3)
-      Serial.println("Mode long");
-
-       if(detection_1 && !wait_detect) {
-        //Si le train est détecté sur Detect_1
-        delay(100);
-        PN_1_DO();
-        
-        delay(500);
-        PN_2_DO();
-        
-        sens_brive_to_tulle = true;
-      }
-
-      if(detection_3 && sens_brive_to_tulle) {
-        //Si le train est détecté sur Detect_3
-        delay(100);
-        PN_1_UP();
-        delay(500);
-        PN_2_UP();
-        sens_brive_to_tulle = false;
-        wait_detect = true;
-      }
-
-       if(detection_3 && !wait_detect) {
-        //Si le train est détecté sur Detect_3
-        delay(100);
-        PN_2_DO();
-        
-        delay(500);
-        PN_1_DO();
-        
-        sens_tulle_to_brive = true;
-      }
-
-      if(detection_1 && sens_tulle_to_brive) {
-        //Si le train est détecté sur Detect_1
-        delay(100);
-        PN_2_UP();
-        delay(500);
-        PN_1_UP();
-        sens_tulle_to_brive = false;
-        wait_detect = true;
-      }
-    }
-
-    PN_Clignote(start_led_PN1, start_led_PN2);
+    //Mode fonctionnel : Automate active
     
-    if(wait_detect) {
-      int i = 0;
-      while(i <= 5000) {
-        i++;
-        delay(1);
-      }
-      wait_detect = false;
+    //Bouton mode normal / mode ralonge
+    if((btnConf > 500) && (btnConf < 520)) {
+      //Mode normal
+      seqNormale();
+      actionPN();
+    }
+    else if ((btnConf > 700) && (btnConf < 710)) {
+      //Mode ralonge
+      seqRalonge();
+      actionPN();
+    }
+    waitEndSequence(500); //Attendre 500 passages
+    clignotementFeuPN1(start_Led_PN1);
+    clignotementFeuPN2(start_Led_PN2);
+  }
+  else if ((btnMoveTo > 700) && (btnMoveTo < 710)) {
+    //Mode transport : Automate désactive
+    modeTransport();
+    currentSeq = 0;
+  }
+}
+
+void capture() {
+  //Recupere l'etat des boutons
+  btnConf = analogRead(btnConfig);
+  btnMoveTo = analogRead(btnMove);
+  detection_1 = digitalRead(detect_1);
+  detection_2 = digitalRead(detect_2);
+  detection_3 = digitalRead(detect_3);
+}
+
+//Sequence normale
+void seqNormale() {
+  initBarrieres(); //Initialisation des barrieres
+  dirBriveToTulle("NORMALE");  //Direction Brive vers Tulle
+  dirTulleToBrive("NORMALE"); //Direction Tulle vers Brive
+  Serial.print(currentSeq);
+  Serial.print(" - ");
+  Serial.print(passages_A);
+  Serial.print(" - ");
+  Serial.print(passages_B);
+  Serial.print("\n");
+}
+
+//Sequence ralonge
+void seqRalonge() {
+  initBarrieres(); //Initialisation des barrieres
+  dirBriveToTulle("RALONGE"); //Direction Brive vers Tulle
+  dirTulleToBrive("RALONGE"); //Direction Tulle vers Brive
+  Serial.print(currentSeq);
+  Serial.print(" - ");
+  Serial.print(passages_A);
+  Serial.print(" - ");
+  Serial.print(passages_B);
+  Serial.print("\n");
+}
+
+//Direction Brive vers Tulle + mode NORMALE / RALONGE
+void dirBriveToTulle(char mode[10]) {
+  if(strcmp(mode, "NORMALE") == 0) {
+    //Si detection 1 et sequence courente 0
+    if(detection_1 && (currentSeq == 0)) {
+      passages_B = 0;
+      currentSeq = 11; //Sequence 11 : Brive vers Tulle, baisser barriere PN 1, pause, baisser barriere PN 2
+    }
+    else if(detection_2 && (currentSeq == 11)) {
+      passages_B = 0;
+      currentSeq = 12; //Sequence 12 : Brive vers Tulle, lever barriere PN 1, pause, lever barriere PN 2
+      waitEndSeq = true; //Mettre en pause
+    }
+    else if((currentSeq == 12) && !waitEndSeq) {
+      currentSeq = 0;
     }
   }
-  if((btnMoveTo > 700) && (btnMoveTo < 710)) {
-    //On est en mode transport, l'automatisme ne fonctionne pas
-    //Baisser les barrières
-    Serial.println("Mode Transport : L'automatisme est désactivé. Les barrières sont baissés");
-    if(init_barriere) {
-      //On refera une initialisation
-      PN_1_DO();
-      PN_2_DO();
-      FEUX_STOP();
-      init_barriere = false;
+  else if(strcmp(mode, "RALONGE") == 0) {
+    //Si detection 1 et sequence courante 0
+    if(detection_1 && (currentSeq == 0)) {
+      passages_B = 0;
+      currentSeq = 21; //Sequence 21 : Brive vers Tulle, baisser barriere PN 1, pause, baisser barriere PN 2
+    }
+    else if(detection_3 && (currentSeq == 21)) {
+      passages_B = 0;
+      currentSeq = 22; //Sequence 22 : Brive vers Tulle, lever barriere PN 1, pause, lever barriere PN 2
+      waitEndSeq = true; //Mettre en pause
+    }
+    else if((currentSeq == 22) && !waitEndSeq) {
+      currentSeq = 0;
     }
   }
-  delay(1);
 }
 
-void PN_1_UP(){
-  digitalWrite(sensPN_1, HIGH);
-  start_led_PN1 = false;
-  digitalWrite(feuPN_1, LOW);
+//Direction Tulle vers Brive + mode NORMALE / RALONGE
+void dirTulleToBrive(char mode[10]) {
+  if(strcmp(mode, "NORMALE") == 0) {
+    //Si detection 2 et sequence courante 0
+    if(detection_2 && (currentSeq == 0)) {
+      passages_B = 0;
+      currentSeq = 13; //Sequence 13 : Tulle vers Brive, baisser barriere PN 2, pause, baisser barriere PN 1
+    }
+    else if(detection_1 && (currentSeq == 13)) {
+      passages_B = 0;
+      currentSeq = 14; //Sequence 14 : Tulle vers Brive, lever barriere PN 2, pause, lever barriere PN 1
+      waitEndSeq = true; //Mettre en pause
+    }
+    else if((currentSeq == 14) && !waitEndSeq) {
+      currentSeq = 0;
+    }
+  }
+  else if(strcmp(mode, "RALONGE") == 0) {
+    //Si detection 3 et sequence courente 0
+    if(detection_3 && (currentSeq == 0)) {
+      passages_B = 0;
+      currentSeq = 23; //Sequence 23 : Tulle vers Brive, baisser barriere PN 2, pause, baisser barriere PN 1
+    }
+    else if(detection_1 && (currentSeq == 23)) {
+      passages_B = 0;
+      currentSeq = 24; //Sequence 24 : Tulle vers Brive, lever barriere PN 2, pause, lever barriere PN 1
+      waitEndSeq = true; //Mettre en pause
+    }
+    else if((currentSeq == 24) && !waitEndSeq) {
+      currentSeq = 0;
+    }
+  }
 }
 
-void PN_2_UP(){
-  digitalWrite(sensPN_2, HIGH);
-  start_led_PN2 = false;
-  digitalWrite(feuPN_2, LOW);
+void actionPN() {
+  
+  //Sequence 11 : Brive vers Tulle, baisser barriere PN 1, pause, baisser barriere PN 2, NORMAL
+  if(currentSeq == 11) {
+    if(passages_B < 200) {
+      PN(1, "DOWN");
+      FEUX(1, "ON");
+      passages_B++;
+    }
+    else if(passages_B == 200) {
+      PN(2, "DOWN");
+      FEUX(2, "ON");
+      passages_B = 0;
+    }
+  }
+  
+  //Sequence 12 : Brive vers Tulle, lever barriere PN 1, pause, lever barriere PN 2, NORMAL
+  if(currentSeq == 12) {
+    if(passages_B < 200) {
+      PN(1, "UP");
+      FEUX(1, "OFF");
+      passages_B++;
+    }
+    else if(passages_B == 200) {
+      PN(2, "UP");
+      FEUX(2, "OFF");
+    }
+  }
+  
+  //Sequence 21 : Brive vers Tulle, baisser barriere PN 1, pause, baisser barriere PN 2, RALONGE
+  if(currentSeq == 21) {
+    if(passages_B < 200) {
+      PN(1, "DOWN");
+      FEUX(1, "ON");
+      passages_B++;
+    }
+    else if(passages_B == 200) {
+      PN(2, "DOWN");
+      FEUX(2, "ON");
+    }
+  }
+  
+  //Sequence 22 : Brive vers Tulle, lever barriere PN 1, pause, lever barriere PN 2, RALONGE
+  if(currentSeq == 22) {
+    if(passages_B < 200) {
+      PN(1, "UP");
+      FEUX(1, "OFF");
+      passages_B++;
+    }
+    else if(passages_B == 200) {
+      PN(2, "UP");
+      FEUX(2, "OFF");
+    }
+  }
+  
+  //Sequence 13 : Tulle vers Brive, baisser barriere PN 2, pause, baisser barriere PN 1, NORMAL
+  if(currentSeq == 13) {
+    if(passages_B < 200) {
+      PN(2, "DOWN");
+      FEUX(2, "ON");
+      passages_B++;
+    }
+    else if(passages_B == 200) {
+      PN(1, "DOWN");
+      FEUX(1, "ON");
+    }
+  }
+  
+  //Sequence 14 : Tulle vers Brive, lever barriere PN 2, pause, lever barriere PN 1, NORMAL
+  if(currentSeq == 14) {
+    if(passages_B < 200) {
+      PN(2, "UP");
+      FEUX(2, "OFF");
+      passages_B++;
+    }
+    else if(passages_B == 200) {
+      PN(1, "UP");
+      FEUX(1, "OFF");
+    }
+  }
+  
+  //Sequence 23 : Tulle vers Brive, baisser barriere PN 2, pause, baisser barriere PN 1, RALONGE
+  if(currentSeq == 23) {
+    if(passages_B < 200) {
+      PN(2, "DOWN");
+      FEUX(2, "ON");
+      passages_B++;
+    }
+    else if(passages_B == 200) {
+      PN(1, "DOWN");
+      FEUX(1, "ON");
+    }
+  }
+  
+  //Sequence 24 : Tulle vers Brive, lever barriere PN 2, pause, lever barriere PN 1, RALONGE
+  if(currentSeq == 24) {
+    if(passages_B < 200) {
+      PN(2, "UP");
+      FEUX(2, "OFF");
+      passages_B++;
+    }
+    else if(passages_B == 200) {
+      PN(1, "UP");
+      FEUX(1, "OFF");
+    }
+  }
 }
 
-void PN_1_DO(){
-  digitalWrite(sensPN_1, LOW);
-  start_led_PN1 = true;
+//Rends volontairement bloquant toute sequence
+//Sensibilisation aux declenchement intempestifs
+//Attendre en fin de sequence
+void waitEndSequence(int timeWait){
+  //Pause active ?
+  if(waitEndSeq) {
+    if(passages_A < timeWait) {
+      passages_A++;
+    }
+    else if(passages_A = timeWait) {
+      passages_A = 0; //Reinitialise passages a  0
+      waitEndSeq = false; //Reinitialise la pause
+    }
+  }
 }
 
-void PN_2_DO(){
-  digitalWrite(sensPN_2, LOW);
-  start_led_PN2 = true;
+//Initialisation de la barriere
+void initBarrieres() {
+  if(!initPN) {
+    //Lever les barrieres
+    PN(1, "UP");
+    FEUX(1, "OFF");
+    PN(2, "UP");
+    FEUX(2, "OFF");
+    
+    initPN = true; //Initialisation fini
+  }
 }
 
-void FEUX_STOP(){
-  digitalWrite(feuPN_1, LOW);
-  digitalWrite(feuPN_2, LOW);
+//Mode transport
+void modeTransport() {
+  PN(1, "DOWN");
+  FEUX(1, "OFF");
+  PN(2, "DOWN");
+  FEUX(2, "OFF");
+  initPN = false; //Initialisation a  faire
 }
 
+//Gestion des barrieres des passages a  niveaux
+void PN(int nro, char action[10]) {
+  if(nro == 1) {
+    if(strcmp(action, "DOWN") == 0) {
+      digitalWrite(sensPN_1, LOW);
+    }
+    else if(strcmp(action, "UP") == 0) {
+      digitalWrite(sensPN_1, HIGH);
+    }
+  }
+  else if(nro == 2) {
+    if(strcmp(action, "DOWN") == 0) {
+      digitalWrite(sensPN_2, LOW);
+    }
+    else if(strcmp(action, "UP") == 0) {
+      digitalWrite(sensPN_2, HIGH);
+    }
+  }
+}
 
-void PN_Clignote(boolean led_PN1, boolean led_PN2) {
-  unsigned long currentMillis = millis();
-  if(currentMillis - previousMillis > 600) {
-    previousMillis = currentMillis;
-    if(led_PN1) {
-      if(led_PN1_state){
+//Gestion des feux clignotants des passages a  niveaux
+void FEUX(int nro, char action[5]) {
+  if(nro == 1) {
+    if(strcmp(action, "OFF") == 0) {
+      start_Led_PN1 = false;
+      digitalWrite(feuPN_1, LOW);
+    }
+    else if(strcmp(action, "ON") == 0) {
+      //digitalWrite(feuPN_1, HIGH);
+      start_Led_PN1 = true;
+    }
+  }
+  else if(nro == 2) {
+    if(strcmp(action, "OFF") == 0) {
+      start_Led_PN2 = false;
+      digitalWrite(feuPN_2, LOW);
+    }
+    else if(strcmp(action, "ON") == 0) {
+      //digitalWrite(feuPN_2, HIGH);
+      start_Led_PN2 = true;
+    }
+  }
+}
+
+void clignotementFeuPN1(boolean athorizedLed1) {
+  currentMillis_A = millis();
+  if(currentMillis_A - previousMillis_A > 700) {
+    previousMillis_A = currentMillis_A;
+    if(athorizedLed1) {
+      if(led_PN1_state) {
         digitalWrite(feuPN_1, LOW);
         led_PN1_state = false;
-      } else {
+      }
+      else {
         digitalWrite(feuPN_1, HIGH);
         led_PN1_state = true;
       }
     }
-    if(led_PN2) {
-       if(led_PN2_state){
+  }
+}
+
+void clignotementFeuPN2(boolean athorizedLed2) {
+  currentMillis_B = millis();
+  if(currentMillis_B - previousMillis_B > 700) {
+    previousMillis_B = currentMillis_B;
+    if(athorizedLed2) {
+      if(led_PN2_state) {
         digitalWrite(feuPN_2, LOW);
         led_PN2_state = false;
-      } else {
+      }
+      else {
         digitalWrite(feuPN_2, HIGH);
         led_PN2_state = true;
       }
     }
-  }   
+  }
 }
 
